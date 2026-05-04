@@ -1,0 +1,33 @@
+{
+  "name": "njs-event-expense-tracker",
+  "version": "1.0.0",
+  "description": "Event Expence Tracker",
+  "keywords": [
+    "event",
+    "expenses",
+    "tracker"
+  ],
+  "license": "ISC",
+  "author": "Roboraptor",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.9.0",
+    "bootstrap": "^5.3.8",
+    "next": "^16.2.4",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^6.0.3"
+  }
+}
