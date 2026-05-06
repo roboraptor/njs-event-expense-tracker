@@ -12,10 +12,10 @@ export default async function SettlementsPage() {
             <h5 className="mb-0">Settlement Calculations</h5>
           </div>
           <div className="card-body">
-            {balancesData.totalExpenses > 0 ? (
+            {balancesData.totalExpenses > 0 || balancesData.userBalances.some(u => u.share > 0) ? (
               <div className="row">
                 <div className="col-md-4 text-center border-end">
-                  <h6>Total Pool</h6>
+                  <h6>Total Group Pool</h6>
                   <h3 className="text-success">{c}{balancesData.totalExpenses.toFixed(2)}</h3>
                 </div>
                 {balancesData.settings.useDaysAttended ? (
@@ -49,7 +49,7 @@ export default async function SettlementsPage() {
         </div>
       </div>
 
-      {balancesData.totalExpenses > 0 && (
+      {(balancesData.totalExpenses > 0 || balancesData.userBalances.some(u => u.share > 0)) && (
         <>
           <div className="col-md-6 mb-4">
             <div className="card h-100">
@@ -64,7 +64,7 @@ export default async function SettlementsPage() {
                         <th>Person</th>
                         {balancesData.settings.useDaysAttended && <th className="text-center">Days</th>}
                         <th className="text-end">Paid</th>
-                        <th className="text-end">Share</th>
+                        <th className="text-end">Total Share</th>
                         <th className="text-end">Balance</th>
                       </tr>
                     </thead>

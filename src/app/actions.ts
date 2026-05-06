@@ -20,10 +20,12 @@ export async function createExpense(formData: FormData) {
   const amount = parseFloat(formData.get('amount') as string);
   const payer_id = parseInt(formData.get('payer_id') as string, 10);
   const category = formData.get('category') as string || 'Other';
+  const for_user_id_raw = formData.get('for_user_id') as string;
+  const for_user_id = for_user_id_raw ? parseInt(for_user_id_raw, 10) : null;
   
   if (!title || isNaN(amount) || isNaN(payer_id)) return;
   
-  addExpense(title.trim(), amount, payer_id, category);
+  addExpense(title.trim(), amount, payer_id, category, for_user_id);
   revalidatePath('/');
   revalidatePath('/add');
   revalidatePath('/settlements');

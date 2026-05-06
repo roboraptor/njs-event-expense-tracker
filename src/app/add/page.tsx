@@ -69,6 +69,19 @@ export default async function AddRecordPage() {
                   </select>
                 </div>
 
+                <div className="mb-4">
+                  <label className="form-label">Applies To (Optional)</label>
+                  <select name="for_user_id" className="form-select" defaultValue="">
+                    <option value="">Everyone (Group Expense)</option>
+                    <optgroup label="Individual Fee (Only for)">
+                      {users.map(user => (
+                        <option key={user.id} value={user.id}>{user.name} only</option>
+                      ))}
+                    </optgroup>
+                  </select>
+                  <div className="form-text">Select a person if this is an individual fee (like someone's dog, personal insurance). It won't increase the total pool.</div>
+                </div>
+
                 <div className="d-grid">
                   <button type="submit" className="btn btn-info text-white btn-lg">
                     Log Expense

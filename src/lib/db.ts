@@ -20,7 +20,9 @@ db.exec(`
     payer_id INTEGER NOT NULL,
     date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     category TEXT DEFAULT 'Other',
-    FOREIGN KEY(payer_id) REFERENCES users(id)
+    for_user_id INTEGER DEFAULT NULL,
+    FOREIGN KEY(payer_id) REFERENCES users(id),
+    FOREIGN KEY(for_user_id) REFERENCES users(id)
   );
 
   CREATE TABLE IF NOT EXISTS settings (
@@ -38,6 +40,9 @@ try {
   const tableInfo = db.pragma("table_info(expenses)") as any[];
   if (!tableInfo.some(col => col.name === 'category')) {
     db.exec(`ALTER TABLE expenses ADD COLUMN category TEXT DEFAULT 'Other'`);
+  }
+  if (!tableInfo.some(col => col.name === 'for_user_id')) {
+    db.exec(`ALTER TABLE expenses ADD COLUMN for_user_id INTEGER DEFAULT NULL`);
   }
 } catch (e) {
   // Ignore errors
@@ -62,7 +67,9 @@ export interface Expense {
   payer_id: number;
   date: string;
   category: string;
+  for_user_id: number | null;
   payer_name?: string;
+  for_user_name?: string;
 }
 
 export interface Settlement {
@@ -109,16 +116,17 @@ export function addUser(name: string, days: number = 1): { success: boolean; id?
 
 export function getExpenses(): Expense[] {
   return db.prepare(`
-    SELECT expenses.*, users.name as payer_name 
+    SELECT expenses.*, u1.name as payer_name, u2.name as for_user_name 
     FROM expenses 
-    JOIN users ON expenses.payer_id = users.id
+    JOIN users u1 ON expenses.payer_id = u1.id
+    LEFT JOIN users u2 ON expenses.for_user_id = u2.id
     ORDER BY date DESC
   `).all() as Expense[];
 }
 
-export function addExpense(title: string, amount: number, payer_id: number, category: string = 'Other'): { success: boolean; id?: number | bigint; error?: string } {
+export function addExpense(title: string, amount: number, payer_id: number, category: string = 'Other', for_user_id: number | null = null): { success: boolean; id?: number | bigint; error?: string } {
   try {
-    const result = db.prepare('INSERT INTO expenses (title, amount, payer_id, category) VALUES (?, ?, ?, ?)').run(title, amount, payer_id, category);
+    const result = db.prepare('INSERT INTO expenses (title, amount, payer_id, category, for_user_id) VALUES (?, ?, ?, ?, ?)').run(title, amount, payer_id, category, for_user_id);
     return { success: true, id: result.lastInsertRowid };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -142,18 +150,26 @@ export function getBalances(): BalancesData {
 
   if (users.length === 0) return { settlements: [], userBalances: [], totalExpenses: 0, totalDays: 0, dailyRate: 0, settings };
 
-  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const groupExpenses = expenses.filter(e => e.for_user_id === null);
+  const individualExpenses = expenses.filter(e => e.for_user_id !== null);
+
+  const totalGroupExpenses = groupExpenses.reduce((sum, exp) => sum + exp.amount, 0);
   const totalDays = users.reduce((sum, user) => sum + user.days, 0);
-  const dailyRate = totalDays > 0 ? totalExpenses / totalDays : 0;
-  const averageExpense = totalExpenses / users.length;
+  const dailyRate = totalDays > 0 ? totalGroupExpenses / totalDays : 0;
+  const averageExpense = totalGroupExpenses / users.length;
 
   // Calculate each user's balance based on settings and duration of stay
   const balances = users.map(user => {
     const paidByThisUser = expenses
       .filter(exp => exp.payer_id === user.id)
       .reduce((sum, exp) => sum + exp.amount, 0);
+
+    const personalExpenses = individualExpenses
+      .filter(exp => exp.for_user_id === user.id)
+      .reduce((sum, exp) => sum + exp.amount, 0);
       
-    const fairShare = settings.useDaysAttended ? (dailyRate * user.days) : averageExpense;
+    const groupFairShare = settings.useDaysAttended ? (dailyRate * user.days) : averageExpense;
+    const fairShare = groupFairShare + personalExpenses;
       
     return {
       id: user.id,
@@ -196,7 +212,7 @@ export function getBalances(): BalancesData {
   return {
     userBalances: balances,
     settlements: settlements,
-    totalExpenses,
+    totalExpenses: totalGroupExpenses, // total pool for the group
     totalDays,
     dailyRate,
     settings

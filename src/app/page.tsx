@@ -34,6 +34,7 @@ export default async function Home() {
                       <th>Date</th>
                       <th>Category</th>
                       <th>Paid By</th>
+                      <th>Applies To</th>
                       <th>Description</th>
                       <th>Amount</th>
                       <th className="text-end">Actions</th>
@@ -45,6 +46,13 @@ export default async function Home() {
                         <td>{new Date(expense.date).toLocaleDateString()}</td>
                         <td><span className="badge bg-secondary">{expense.category}</span></td>
                         <td><strong>{expense.payer_name}</strong></td>
+                        <td>
+                          {expense.for_user_id ? (
+                            <span className="badge bg-warning text-dark">{expense.for_user_name} Only</span>
+                          ) : (
+                            <span className="badge bg-info text-dark">Group</span>
+                          )}
+                        </td>
                         <td>{expense.title}</td>
                         <td className="text-success fw-bold">{settings.currency}{expense.amount.toFixed(2)}</td>
                         <td className="text-end">
