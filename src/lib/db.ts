@@ -79,9 +79,11 @@ export interface Settlement {
 }
 
 export interface BalancesData {
-  userBalances: { id: number; name: string; days: number; paid: number; share: number; balance: number }[];
+  userBalances: { id: number; name: string; days: number; paid: number; groupShare: number; individualShare: number; share: number; balance: number }[];
   settlements: Settlement[];
   totalExpenses: number;
+  totalGroupExpenses: number;
+  totalIndividualExpenses: number;
   totalDays: number;
   dailyRate: number;
   settings: Settings;
@@ -109,6 +111,15 @@ export function addUser(name: string, days: number = 1): { success: boolean; id?
   try {
     const result = db.prepare('INSERT INTO users (name, days) VALUES (?, ?)').run(name, days);
     return { success: true, id: result.lastInsertRowid };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export function updateUser(id: number, name: string, days: number): { success: boolean; error?: string } {
+  try {
+    db.prepare('UPDATE users SET name = ?, days = ? WHERE id = ?').run(name, days, id);
+    return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -148,12 +159,14 @@ export function getBalances(): BalancesData {
   const expenses = getExpenses();
   const settings = getSettings();
 
-  if (users.length === 0) return { settlements: [], userBalances: [], totalExpenses: 0, totalDays: 0, dailyRate: 0, settings };
+  if (users.length === 0) return { settlements: [], userBalances: [], totalExpenses: 0, totalGroupExpenses: 0, totalIndividualExpenses: 0, totalDays: 0, dailyRate: 0, settings };
 
   const groupExpenses = expenses.filter(e => e.for_user_id === null);
   const individualExpenses = expenses.filter(e => e.for_user_id !== null);
 
   const totalGroupExpenses = groupExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const totalIndividualExpenses = individualExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const totalExpensesAll = totalGroupExpenses + totalIndividualExpenses;
   const totalDays = users.reduce((sum, user) => sum + user.days, 0);
   const dailyRate = totalDays > 0 ? totalGroupExpenses / totalDays : 0;
   const averageExpense = totalGroupExpenses / users.length;
@@ -176,6 +189,8 @@ export function getBalances(): BalancesData {
       name: user.name,
       days: user.days,
       paid: paidByThisUser,
+      groupShare: groupFairShare,
+      individualShare: personalExpenses,
       share: fairShare,
       balance: paidByThisUser - fairShare // positive = gets money back, negative = owes money
     };
@@ -212,7 +227,9 @@ export function getBalances(): BalancesData {
   return {
     userBalances: balances,
     settlements: settlements,
-    totalExpenses: totalGroupExpenses, // total pool for the group
+    totalExpenses: totalExpensesAll, 
+    totalGroupExpenses: totalGroupExpenses,
+    totalIndividualExpenses: totalIndividualExpenses,
     totalDays,
     dailyRate,
     settings

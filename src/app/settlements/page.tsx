@@ -1,4 +1,5 @@
 import { getBalances } from '@/lib/db';
+import Link from 'next/link';
 
 export default async function SettlementsPage() {
   const balancesData = getBalances();
@@ -6,6 +7,8 @@ export default async function SettlementsPage() {
 
   return (
     <div className="row">
+
+
       <div className="col-12 mb-4">
         <div className="card">
           <div className="card-header bg-success text-white">
@@ -150,6 +153,10 @@ export default async function SettlementsPage() {
           </div>
         </>
       )}
+
+      <div className="col-12 mt-2 mb-5 text-center">
+        <Link href="/explanation" className="btn btn-outline-info">How is this calculated?</Link>
+      </div>
     </div>
   );
 }

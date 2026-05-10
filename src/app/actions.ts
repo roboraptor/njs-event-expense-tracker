@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { addUser, addExpense, deleteExpense, deleteUser, updateSetting } from '@/lib/db';
+import { addUser, addExpense, deleteExpense, deleteUser, updateSetting, updateUser } from '@/lib/db';
 
 export async function createUser(formData: FormData) {
   const name = formData.get('name') as string;
@@ -48,6 +48,20 @@ export async function removeUser(formData: FormData) {
   revalidatePath('/settings');
   revalidatePath('/settlements');
   revalidatePath('/');
+}
+
+export async function editUser(formData: FormData) {
+  const id = parseInt(formData.get('id') as string, 10);
+  const name = formData.get('name') as string;
+  const days = parseInt(formData.get('days') as string, 10) || 1;
+  
+  if (isNaN(id) || !name || name.trim() === '') return;
+  
+  updateUser(id, name.trim(), days);
+  revalidatePath('/settings');
+  revalidatePath('/settlements');
+  revalidatePath('/');
+  revalidatePath('/add');
 }
 
 export async function updateGlobalSettings(formData: FormData) {

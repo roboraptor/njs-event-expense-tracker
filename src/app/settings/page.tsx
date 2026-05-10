@@ -1,5 +1,6 @@
 import { getUsers, getSettings } from '@/lib/db';
 import { createUser, removeUser, updateGlobalSettings } from '@/app/actions';
+import UserRow from '@/components/UserRow';
 
 export default async function SettingsPage() {
   const users = getUsers();
@@ -102,18 +103,7 @@ export default async function SettingsPage() {
                 <li className="list-group-item text-muted text-center py-3">No attendees added yet.</li>
               ) : (
                 users.map(user => (
-                  <li key={user.id} className="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                      <strong className="me-2">{user.name}</strong>
-                      {settings.useDaysAttended && (
-                        <span className="badge bg-secondary">{user.days} {user.days === 1 ? 'day' : 'days'}</span>
-                      )}
-                    </div>
-                    <form action={removeUser}>
-                      <input type="hidden" name="id" value={user.id} />
-                      <button type="submit" className="btn btn-sm btn-outline-danger">Remove</button>
-                    </form>
-                  </li>
+                  <UserRow key={user.id} user={user} useDaysAttended={settings.useDaysAttended} />
                 ))
               )}
             </ul>
